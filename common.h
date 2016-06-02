@@ -17,19 +17,14 @@
 #include "x_string.h"
 #include "ber.h"
 
-typedef union UINT64_U {
-	uint64_t whole_word;
-	uint8_t word_by_byte[8];
-}UINT64_T_U;
-
-typedef struct STR_LEN {
-	uint8_t * str_len;
+typedef struct VAR_LEN {
+	uint8_t * var_len;
 	uint8_t bytes_held;
-}STR_LEN_T;
+}VAR_LEN_T;
 
-static inline void free_STR_LEN(STR_LEN_T * pStr) {
-	free(pStr->str_len);
-	free(pStr);
+static inline void free_VAR_LEN(VAR_LEN_T * ptr) {
+	free(ptr->var_len);
+	free(ptr);
 }
 
 #endif /* COMMON_H_ */

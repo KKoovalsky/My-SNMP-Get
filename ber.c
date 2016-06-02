@@ -2,9 +2,9 @@
 #include "ber.h"
 
 
-STR_LEN_T * oid_chr_to_hex(char * str) {
+VAR_LEN_T * oid_chr_to_hex(char * str) {
 
-	STR_LEN_T * RET;
+	VAR_LEN_T * RET;
 	char *ptr = str;
 	uint8_t len = 1;
 	uint16_t len_hex, ind_hex;
@@ -73,8 +73,8 @@ STR_LEN_T * oid_chr_to_hex(char * str) {
 		}
 	}
 
-	RET = (STR_LEN_T *) malloc (sizeof ( STR_LEN_T));
-	RET->str_len = hex_form;
+	RET = (VAR_LEN_T *) malloc (sizeof ( VAR_LEN_T ));
+	RET->var_len = hex_form;
 	RET->bytes_held = ind_hex;
 	hex_form[ind_hex] = '\0';
 	free(nrs_in_oid);

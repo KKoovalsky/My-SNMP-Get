@@ -1,14 +1,14 @@
 #include "common.h"
 #include "x_string.h"
 
-static inline void str_inv(STR_LEN_T * STR) {
-	uint8_t * str = (uint8_t*) malloc (sizeof(uint8_t) * (STR->bytes_held + 1));
-	for(uint8_t i = 0 ; i < STR->bytes_held ; i ++) {
-		str[i] = STR->str_len[STR->bytes_held - i - 1];
+static inline void str_inv(VAR_LEN_T * ptr) {
+	uint8_t * str = (uint8_t*) malloc (sizeof(uint8_t) * (ptr->bytes_held + 1));
+	for(uint8_t i = 0 ; i < ptr->bytes_held ; i ++) {
+		str[i] = ptr->var_len[ptr->bytes_held - i - 1];
 	}
-	str[STR->bytes_held] = '\0';
-	uint8_t * temp = STR->str_len;
-	STR->str_len = str;
+	str[ptr->bytes_held] = '\0';
+	uint8_t * temp = ptr->var_len;
+	ptr->var_len = str;
 	free(temp);
 }
 
@@ -18,9 +18,9 @@ void printf_str_as_hex(uint8_t * str) {
 	printf("\n");
 }
 
-void printf_STR_LEN_T(STR_LEN_T * STR) {
-	for(uint8_t i = 0; i < STR->bytes_held; i ++) {
-		printf("%X ", STR->str_len[i]);
+void printf_VAR_LEN_T(VAR_LEN_T * ptr) {
+	for(uint8_t i = 0; i < ptr->bytes_held; i ++) {
+		printf("%X ", ptr->var_len[i]);
 	}
 	printf("\n");
 }
@@ -29,10 +29,10 @@ void printf_STR_LEN_T(STR_LEN_T * STR) {
 /* 	Long form of header can contain 127 octets and maximum number of bytes representing a number is eight
  	so internal arithmetic should be implemented.
  	Structure STR_LEN_T contains number of length bytes and the length bytes. */
-STR_LEN_T * x_strlen(char * str) {
+VAR_LEN_T * x_strlen(char * str) {
 	uint8_t * len;
 	uint8_t bytes_held = 1;
-	STR_LEN_T * RET;
+	VAR_LEN_T * RET;
 
 	// Firstly, allocate memory only for one length byte and for \0 character.
 	len = (uint8_t *) malloc (sizeof(uint8_t) * 2);
@@ -68,8 +68,8 @@ STR_LEN_T * x_strlen(char * str) {
 	}
 
 	len[bytes_held] = '\0';
-	RET = (STR_LEN_T *) malloc (sizeof(STR_LEN_T));
-	RET->str_len = len;
+	RET = (VAR_LEN_T *) malloc (sizeof( VAR_LEN_T ));
+	RET->var_len = len;
 	RET->bytes_held = bytes_held;
 
 
