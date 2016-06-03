@@ -17,6 +17,9 @@
 #include "x_string.h"
 #include "ber.h"
 
+#define OCTET_STRING 0x04
+#define OID 0x06
+
 typedef struct VAR_LEN {
 	uint8_t * var_len;
 	uint8_t bytes_held;

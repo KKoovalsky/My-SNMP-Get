@@ -12,8 +12,7 @@ int main(int argc, char * argv[]) {
 	//char id[] = "1";
 	//char ver[] = "-v1"; //argv[3]
 	char Oid[] = "1.3.6.1.4.1.2680.1.2.7.3.2.0";
-	char CommStringHead[3];
-	VAR_LEN_T * CommStringLen, * OidHex;
+	VAR_LEN_T * CommStringHead, * CommStringLen, * OidHex, *OidHexHead;
 
 	// Sequence + version
 	//char head[] = {0x30, 0x29, 0x02, 0x01, 0x00};
@@ -22,22 +21,13 @@ int main(int argc, char * argv[]) {
 	// Community string
 	CommStringLen = x_strlen(CommString);
 	printf_VAR_LEN_T(CommStringLen);
-	if(CommStringLen->bytes_held > 127) {
-		printf("Too long community string (max 2^127 length)");
-		free_VAR_LEN(CommStringLen);
-		return 0;
-	}
-	CommStringHead[0] = 0x04;
-	CommStringHead[1] = CommStringLen->var_len[0];
-	CommStringHead[2] = '\0';
-	if(CommStringLen->bytes_held > 1 || CommStringLen->var_len[0] > 127) {
-		CommStringHead[1] = CommStringLen->bytes_held | 0x80; // Long form
-	}
-
+	CommStringHead = create_head(OCTET_STRING, CommStringLen);
+	free_VAR_LEN(CommStringLen);
 
 	// Convert OID to hex format
 	OidHex = oid_chr_to_hex(Oid);
 	printf_VAR_LEN_T(OidHex);
+	OidHexHead = create_head(OID, OidHex);
 
 	free_VAR_LEN(OidHex);
 	free_VAR_LEN(CommStringLen);

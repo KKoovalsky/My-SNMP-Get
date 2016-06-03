@@ -12,4 +12,6 @@ typedef struct VAR_LEN VAR_LEN_T;
 
 VAR_LEN_T * oid_chr_to_hex(char * str);
 
+VAR_LEN_T * create_head(uint8_t type, VAR_LEN_T * var);
+
 #endif /* BER_H_ */

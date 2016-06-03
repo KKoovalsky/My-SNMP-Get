@@ -1,7 +1,6 @@
 #include "common.h"
 #include "ber.h"
 
-
 VAR_LEN_T * oid_chr_to_hex(char * str) {
 
 	VAR_LEN_T * RET;
@@ -78,5 +77,35 @@ VAR_LEN_T * oid_chr_to_hex(char * str) {
 	RET->bytes_held = ind_hex;
 	hex_form[ind_hex] = '\0';
 	free(nrs_in_oid);
+	return RET;
+}
+
+VAR_LEN_T * create_head(uint8_t type, VAR_LEN_T * var) {
+
+	VAR_LEN_T * RET;
+	uint8_t * len;
+	uint8_t bytes_held;
+
+	if(var->bytes_held > 127) {
+		printf("Too long octet string (max size 2^(127 * 8))");
+		return NULL;
+	}
+
+	bytes_held = 1 + (var->bytes_held > 1 ? (var->bytes_held + 1) :
+			((var->var_len[0] > 127) ? 2 : 1 ));
+
+	len = (uint8_t * ) malloc ((1 + bytes_held) * sizeof ( uint8_t ));
+
+	len[0] = type;
+	if(var->bytes_held > 1 || var->var_len[0] > 127) {
+		len[1] = 0x80 | var->bytes_held;
+		memcpy(&len[2], var->var_len, var->bytes_held);
+	} else {
+		len[1] = var->var_len[0];
+	}
+
+	RET = (VAR_LEN_T *) malloc ( sizeof ( VAR_LEN_T ) );
+	RET->bytes_held = bytes_held;
+	RET->var_len = len;
 	return RET;
 }
