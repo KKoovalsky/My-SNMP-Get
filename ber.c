@@ -1,12 +1,11 @@
 #include "common.h"
 #include "ber.h"
 
-VAR_LEN_T * oid_chr_to_hex(char * str) {
+VAR_T * oid_chr_to_hex(char * str_oid) {
 
-	VAR_LEN_T * RET;
-	char *ptr = str;
-	uint8_t len = 1;
-	uint16_t len_hex, ind_hex;
+	VAR_T * RET;
+	char *ptr = str_oid;
+	uint64_t len = 1, len_hex, ind_hex;
 	uint64_t * nrs_in_oid;
 	uint8_t * hex_form;
 
@@ -18,7 +17,7 @@ VAR_LEN_T * oid_chr_to_hex(char * str) {
 	nrs_in_oid = (uint64_t*) malloc (sizeof(uint64_t) * len);
 
 	// Get numbers in integer form from string.
-	ptr = strtok(str, ".");
+	ptr = strtok(str_oid, ".");
 	for(uint8_t i = 0; i < len ;i++) {
 		// Convert number from string format to integer.
 		nrs_in_oid[i] = atoi(ptr);
@@ -35,7 +34,7 @@ VAR_LEN_T * oid_chr_to_hex(char * str) {
 
 	// The rest as 7 bit nrs:
 	ind_hex = 1;
-	for(uint8_t i = 2 ; i < len ; i ++) {
+	for(uint64_t i = 2 ; i < len ; i ++) {
 		if(nrs_in_oid[i] > 127) {
 			uint64_t temp = nrs_in_oid[i];
 			uint8_t hex_sevens[10 + 1]; // ceil(64/7 = 10)
@@ -72,40 +71,41 @@ VAR_LEN_T * oid_chr_to_hex(char * str) {
 		}
 	}
 
-	RET = (VAR_LEN_T *) malloc (sizeof ( VAR_LEN_T ));
-	RET->var_len = hex_form;
-	RET->bytes_held = ind_hex;
-	hex_form[ind_hex] = '\0';
+	RET = (VAR_T *) malloc (sizeof ( VAR_T ));
+	hex_form = (uint8_t *) realloc(hex_form, sizeof(uint8_t) * ind_hex);
+	RET->var = hex_form;
+	RET->len_bytes = ind_hex;
+
 	free(nrs_in_oid);
 	return RET;
 }
 
-VAR_LEN_T * create_head(uint8_t type, VAR_LEN_T * var) {
+VAR_T * create_head(uint8_t type, VAR_T * length) {
 
-	VAR_LEN_T * RET;
-	uint8_t * len;
+	VAR_T * RET;
+	uint8_t * content;
 	uint8_t bytes_held;
 
-	if(var->bytes_held > 127) {
+	if(length->len_bytes > 127) {
 		printf("Too long octet string (max size 2^(127 * 8))");
 		return NULL;
 	}
 
-	bytes_held = 1 + (var->bytes_held > 1 ? (var->bytes_held + 1) :
-			((var->var_len[0] > 127) ? 2 : 1 ));
+	bytes_held = 1 + (length->len_bytes > 1 ? (length->len_bytes + 1) :
+			((length->var[0] > 127) ? 2 : 1 ));
 
-	len = (uint8_t * ) malloc ((1 + bytes_held) * sizeof ( uint8_t ));
+	content = (uint8_t * ) malloc ((bytes_held) * sizeof ( uint8_t ));
 
-	len[0] = type;
-	if(var->bytes_held > 1 || var->var_len[0] > 127) {
-		len[1] = 0x80 | var->bytes_held;
-		memcpy(&len[2], var->var_len, var->bytes_held);
+	content[0] = type;
+	if(bytes_held > 2) {
+		content[1] = 0x80 | length->len_bytes;
+		memcpy(&content[2], length->var, length->len_bytes);
 	} else {
-		len[1] = var->var_len[0];
+		content[1] = length->var[0];
 	}
 
-	RET = (VAR_LEN_T *) malloc ( sizeof ( VAR_LEN_T ) );
-	RET->bytes_held = bytes_held;
-	RET->var_len = len;
+	RET = (VAR_T *) malloc ( sizeof ( VAR_T ) );
+	RET->len_bytes = bytes_held;
+	RET->var = content;
 	return RET;
 }

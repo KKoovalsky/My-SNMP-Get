@@ -10,14 +10,18 @@
 
 #define MAX_UINT8 0xFF
 
-typedef struct VAR_LEN VAR_LEN_T;
+typedef struct VAR_S VAR_T;
 
-void printf_str_as_hex(uint8_t * str);
+void printf_str_as_hex(char * str);
 
-void printf_VAR_LEN_T(VAR_LEN_T * STR);
+void printf_VAR_T(VAR_T * STR);
 
-VAR_LEN_T * x_strlen(char * str);
+VAR_T * x_strlen(char * str);
 
+VAR_T * x_strlen_VAR_T(VAR_T * str);
 
+VAR_T * sum_VAR_T(VAR_T * L, VAR_T * R);
+
+void update_len_VAR_T(VAR_T * VAR, uint8_t len);
 
 #endif /* X_STRING_H_ */
