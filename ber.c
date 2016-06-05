@@ -1,11 +1,35 @@
 #include "common.h"
 #include "ber.h"
 
-VAR_T * oid_chr_to_hex(char * str_oid) {
+static inline uint8_t create_head(VAR_T * Field, uint8_t type, uint64_t ContentLen) {
 
-	VAR_T * RET;
+	uint8_t len_bytes_occu;
+	UINT64_BY_BYTE_T ContentLenU;
+	ContentLenU.nr = ContentLen;
+	len_bytes_occu = get_bytes_occupied(ContentLenU.nr);
+
+	if(ContentLenU.nr > 127) {
+		Field->len_bytes = 1 + 1 + len_bytes_occu + ContentLenU.nr;
+		Field->var = (uint8_t *) malloc (sizeof(uint8_t) * Field->len_bytes );
+		Field->var[0] = type;
+		Field->var[1] = 0x80 | len_bytes_occu;
+
+		x_memcpy_inv(&Field->var[2], ContentLenU.nr_tab, len_bytes_occu);
+
+		return 2 + len_bytes_occu;
+	}
+
+	Field->len_bytes = 1 + 1 + ContentLenU.nr;
+	Field->var = (uint8_t *) malloc (sizeof(uint8_t) * Field->len_bytes );
+	Field->var[0] = type;
+	Field->var[1] = ContentLenU.nr_tab[0];
+	return 2;
+}
+VAR_T * create_field_oid(char * str_oid){
+
+	VAR_T * Field;
 	char *ptr = str_oid;
-	uint64_t len = 1, len_hex, ind_hex;
+	uint64_t len = 1, len_hex, ind_hex, ind;
 	uint64_t * nrs_in_oid;
 	uint8_t * hex_form;
 
@@ -71,41 +95,67 @@ VAR_T * oid_chr_to_hex(char * str_oid) {
 		}
 	}
 
-	RET = (VAR_T *) malloc (sizeof ( VAR_T ));
-	hex_form = (uint8_t *) realloc(hex_form, sizeof(uint8_t) * ind_hex);
-	RET->var = hex_form;
-	RET->len_bytes = ind_hex;
+	if(len_hex != ind_hex) hex_form = (uint8_t *) realloc(hex_form, sizeof(uint8_t) * ind_hex);
 
+	Field = (VAR_T *) malloc (sizeof(VAR_T));
+	ind = create_head(Field, OID, ind_hex);
+	memcpy(&Field->var[ind], hex_form, ind_hex);
+
+	free(hex_form);
 	free(nrs_in_oid);
-	return RET;
+	return Field;
 }
 
-VAR_T * create_head(uint8_t type, VAR_T * length) {
 
-	VAR_T * RET;
-	uint8_t * content;
-	uint8_t bytes_held;
+VAR_T * create_field_primary_str(uint8_t type, char * data) {
 
-	if(length->len_bytes > 127) {
-		printf("Too long octet string (max size 2^(127 * 8))");
-		return NULL;
+	VAR_T * Field;
+	uint64_t ind;
+
+	if(!data) {
+		Field = (VAR_T *) malloc (sizeof(VAR_T));
+		Field->len_bytes = 2;
+		Field->var = (uint8_t*) malloc (sizeof(uint8_t) * Field->len_bytes );
+		Field->var[0] = type;
+		Field->var[1] = 0;
+		return Field;
 	}
 
-	bytes_held = 1 + (length->len_bytes > 1 ? (length->len_bytes + 1) :
-			((length->var[0] > 127) ? 2 : 1 ));
+	Field = (VAR_T *) malloc (sizeof(VAR_T));
+	ind = create_head(Field, type, strlen(data));
+	memcpy(&Field->var[ind], data, strlen(data));
 
-	content = (uint8_t * ) malloc ((bytes_held) * sizeof ( uint8_t ));
+	return Field;
+}
 
-	content[0] = type;
-	if(bytes_held > 2) {
-		content[1] = 0x80 | length->len_bytes;
-		memcpy(&content[2], length->var, length->len_bytes);
-	} else {
-		content[1] = length->var[0];
+VAR_T * create_field_primary_short(uint8_t type, uint8_t data) {
+	VAR_T * Field = (VAR_T *) malloc (sizeof(VAR_T));
+	Field->len_bytes = 3;
+	Field->var = (uint8_t *) malloc (sizeof (uint8_t) * Field->len_bytes);
+	Field->var[0] = type;
+	Field->var[1] = 1;
+	Field->var[2] = data;
+	return Field;
+}
+
+VAR_T * create_parent_field(uint8_t type, VAR_T ** Fields, uint8_t number) {
+	VAR_T * ParentField;
+
+	uint64_t content_len = 0;
+	uint64_t ind;
+
+	for(uint8_t i = 0 ; i < number ; i ++) {
+		content_len += Fields[i]->len_bytes;
 	}
 
-	RET = (VAR_T *) malloc ( sizeof ( VAR_T ) );
-	RET->len_bytes = bytes_held;
-	RET->var = content;
-	return RET;
+	ParentField = (VAR_T *) malloc (sizeof(VAR_T));
+	ind = create_head(ParentField, type, content_len);
+
+	for(uint8_t i = 0 ; i < number; i ++) {
+		memcpy(&ParentField->var[ind], Fields[i]->var, Fields[i]->len_bytes);
+		ind += Fields[i]->len_bytes;
+	}
+
+	return ParentField;
+
 }

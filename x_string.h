@@ -12,16 +12,10 @@
 
 typedef struct VAR_S VAR_T;
 
-void printf_str_as_hex(char * str);
-
 void printf_VAR_T(VAR_T * STR);
 
-VAR_T * x_strlen(char * str);
+void x_memcpy_inv(uint8_t * to, uint8_t * from, uint8_t how_many);
 
-VAR_T * x_strlen_VAR_T(VAR_T * str);
-
-VAR_T * sum_VAR_T(VAR_T * L, VAR_T * R);
-
-void update_len_VAR_T(VAR_T * VAR, uint8_t len);
+uint8_t get_bytes_occupied(uint64_t input);
 
 #endif /* X_STRING_H_ */

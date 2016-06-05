@@ -8,88 +8,47 @@
 
 int main(int argc, char * argv[]) {
 
-	char CommString[] = "public";
+	char CommString[] = "private";
 
 	char Oid[] = "1.3.6.1.4.1.2680.1.2.7.3.2.0";
-	VAR_T * CommStringHead, * CommStringLen, * CommStringHeadLen, *CommStringWholeLen;
-	VAR_T * OidHex, * OidHexLen, *OidHexHead, *OidHexHeadLen;
-	VAR_T * VarbindLen, * VarbindHead, * VarbindHeadLen, * VarbindListLen, * VarbindListHead, * VarbindListHeadLen;
-	VAR_T * PDULen, * PDUHead, * PDUHeadLen, * PDUWholeLen;
-	VAR_T * PacketLen, * PacketHead;
 
-	// Sequence + version
-	//char head[] = {0x30, 0x29, 0x02, 0x01, 0x00};
+	VAR_T * CommStringField = create_field_primary_str(OCTET_STRING, CommString);
+	VAR_T * OidField = create_field_oid(Oid);
+	VAR_T * GetReqNullField = create_field_primary_str(NULL_T, NULL);
+	VAR_T * UniversalIntField = create_field_primary_short(INTEGER, 0);
 
-	// Community string
-	CommStringLen = x_strlen(CommString);
-	printf_VAR_T(CommStringLen);
-	CommStringHead = create_head(OCTET_STRING, CommStringLen);
-	CommStringHeadLen = x_strlen_VAR_T(CommStringHead);
-	CommStringWholeLen = sum_VAR_T(CommStringHeadLen, CommStringLen);
+	VAR_T * VarbindContent[2];
+	VarbindContent[0] = OidField;
+	VarbindContent[1] = GetReqNullField;
 
-	// Convert OID to hex format
-	OidHex = oid_chr_to_hex(Oid);
-	printf_VAR_T(OidHex);
-	OidHexLen = x_strlen_VAR_T(OidHex);
-	OidHexHead = create_head(OID, OidHexLen);
-	OidHexHeadLen = x_strlen_VAR_T(OidHexHead);
+	VAR_T * VarbindField = create_parent_field(SEQUENCE, VarbindContent, 2);
+	free_VAR_T(OidField);
+	free_VAR_T(GetReqNullField);
 
-	// Varbind
-	VarbindLen = sum_VAR_T(OidHexHeadLen, OidHexLen);
-	update_len_VAR_T(VarbindLen, 2);
-	VarbindHead = create_head(SEQUENCE, VarbindLen);
-	VarbindHeadLen = x_strlen_VAR_T(VarbindHead);
+	VAR_T * VarbindListField = create_parent_field(SEQUENCE, &VarbindField, 1);
+	free_VAR_T(VarbindField);
 
-	// Varbind list
-	VarbindListLen = sum_VAR_T(VarbindHeadLen, VarbindLen);
-	VarbindListHead = create_head(SEQUENCE, VarbindListLen);
-	VarbindListHeadLen = x_strlen_VAR_T(VarbindHead);
+	VAR_T * PDUContent[4];
+	PDUContent[0] = PDUContent[1] = PDUContent[2] = UniversalIntField;
+	PDUContent[3] = VarbindListField;
 
-	// PDU
-	PDULen = sum_VAR_T(VarbindListHeadLen, VarbindListLen);
-	update_len_VAR_T(PDULen, 9);
-	PDUHead = create_head(PDU_GET_REQ, PDULen);
-	PDUHeadLen = x_strlen_VAR_T(PDUHead);
-	PDUWholeLen = sum_VAR_T(PDUHeadLen, PDULen);
+	VAR_T * PDUField = create_parent_field(PDU_GET_REQ, PDUContent, 4);
+	free_VAR_T(VarbindListField);
 
-	// SNMP packet
-	PacketLen = sum_VAR_T(PDUWholeLen, CommStringWholeLen);
-	update_len_VAR_T(PacketLen, 3);
-	PacketHead = create_head(SEQUENCE, PacketLen);
+	VAR_T * SNMPContent[3];
+	SNMPContent[0] = UniversalIntField;
+	SNMPContent[1] = CommStringField;
+	SNMPContent[2] = PDUField;
+
+	VAR_T * SNMPField = create_parent_field(SEQUENCE, SNMPContent, 3);
+	free_VAR_T(UniversalIntField);
+	free_VAR_T(CommStringField);
+	free_VAR_T(PDUField);
 
 
-	//--------------------------------------------------------
-	//	Create SNMP packet
-	//--------------------------------------------------------
+	printf_VAR_T(SNMPField);
 
-
-
-	free_VAR_T(CommStringLen);
-	free_VAR_T(CommStringHead);
-	free_VAR_T(CommStringHeadLen);
-	free_VAR_T(CommStringWholeLen);
-
-	free_VAR_T(OidHex);
-	free_VAR_T(OidHexLen);
-	free_VAR_T(OidHexHead);
-	free_VAR_T(OidHexHeadLen);
-
-	free_VAR_T(VarbindLen);
-	free_VAR_T(VarbindHead);
-	free_VAR_T(VarbindHeadLen);
-
-	free_VAR_T(VarbindListLen);
-	free_VAR_T(VarbindListHead);
-	free_VAR_T(VarbindListHeadLen);
-
-	free_VAR_T(PDULen);
-	free_VAR_T(PDUHead);
-	free_VAR_T(PDUHeadLen);
-	free_VAR_T(PDUWholeLen);
-
-	free_VAR_T(PacketLen);
-	free_VAR_T(PacketHead);
-
+	free_VAR_T(SNMPField);
 	return 0;
 }
 
