@@ -48,6 +48,32 @@ int main(int argc, char * argv[]) {
 
 	printf_VAR_T(SNMPField);
 
+	// UDP packet initialization.
+	const char* hostname = 0; /* localhost */
+	const char* portname = "daytime";
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+
+
+	# ifndef AI_ADDRCONFIG
+	# define AI_ADDRCONFIG 0
+	# endif
+
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_ADDRCONFIG;
+
+	struct addrinfo* res = 0;
+	int err = getaddrinfo(hostname, portname , &hints, &res);
+	if (err != 0) {
+	    printf("failed to resolve remote socket address (err=%d)", err);
+	    return 0;
+	}
+
+
+
+
 	free_VAR_T(SNMPField);
 	return 0;
 }

@@ -16,6 +16,7 @@
 
 #include "x_string.h"
 #include "ber.h"
+#include "udp.h"
 
 #define OCTET_STRING 0x04
 #define OID 0x06
