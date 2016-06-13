@@ -6,6 +6,8 @@
  */
 #include  "common.h"
 
+#define SIZE 1024
+
 int main(int argc, char * argv[]) {
 
 	char CommString[] = "private";
@@ -54,11 +56,6 @@ int main(int argc, char * argv[]) {
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
 
-
-	# ifndef AI_ADDRCONFIG
-	# define AI_ADDRCONFIG 0
-	# endif
-
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = 0;
@@ -68,13 +65,54 @@ int main(int argc, char * argv[]) {
 	int err = getaddrinfo(hostname, portname , &hints, &res);
 	if (err != 0) {
 	    printf("failed to resolve remote socket address (err=%d)", err);
+	    free_VAR_T(SNMPField);
 	    return 0;
 	}
 
+	int fd = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
+	if (fd == -1) {
+	    printf("%s", strerror(errno));
+	    free_VAR_T(SNMPField);
+	    freeaddrinfo(res);
+	    return 0;
+	}
 
+	// Need to determine ai_addr
+	if (sendto(fd, SNMPField->var, SNMPField->len_bytes, 0, res->ai_addr, res->ai_addrlen)==-1) {
+		printf("%s", strerror(errno));
+		free_VAR_T(SNMPField);
+		freeaddrinfo(res);
+		return 0;
+	}
+
+
+	// Need to change ai addr I think
+	if (bind(fd,res->ai_addr, res->ai_addrlen)==-1) {
+		printf("%s", strerror(errno));
+		free_VAR_T(SNMPField);
+		freeaddrinfo(res);
+		return 0;
+	}
+
+	char buffer[SIZE];
+	struct sockaddr_storage src_addr;
+	socklen_t src_addr_len = sizeof(src_addr);
+	ssize_t count = recvfrom(fd, buffer, sizeof(buffer),0, (struct sockaddr*)&src_addr, &src_addr_len);
+	if (count == -1) {
+		printf("%s", strerror(errno));
+		free_VAR_T(SNMPField);
+		freeaddrinfo(res);
+		return 0;
+
+	} else if (count==sizeof(buffer)) {
+	    printf("datagram too large for buffer: truncated");
+	} else {
+		printf("%.*s", SIZE, buffer);
+	}
 
 
 	free_VAR_T(SNMPField);
+	freeaddrinfo(res);
 	return 0;
 }
 
