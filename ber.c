@@ -159,3 +159,36 @@ VAR_T * create_parent_field(uint8_t type, VAR_T ** Fields, uint8_t number) {
 	return ParentField;
 
 }
+
+VAR_T * create_field_int(uint8_t type, uint64_t content) {
+
+
+
+	if(content > 127) {
+		uint64_t temp = content;
+		uint8_t hex_sevens[10 + 1];
+		uint8_t nr_sevens = 0;
+
+		VAR_T * Field = (VAR_T *) malloc (sizeof(VAR_T));
+
+		hex_sevens[10] = '\0';
+		while(temp) {
+			hex_sevens[nr_sevens] =  temp & 0x7F;
+			temp >>= 7;
+			nr_sevens ++;
+		}
+
+		Field->len_bytes = nr_sevens + 2;
+		Field->var = (uint8_t *) malloc (sizeof ( uint8_t ) * Field->len_bytes );
+
+		Field->var[0] = type;
+		Field->var[1] = nr_sevens;
+		for(uint8_t i = 2; i < Field->len_bytes ; i++) {
+			Field->var[i] = hex_sevens[nr_sevens - i + 1] | 0x80;
+		}
+		Field->var[Field->len_bytes - 1] &= 0x7F;
+		return Field;
+	}
+	else return create_field_primary_short(type, (uint8_t) content);
+
+}

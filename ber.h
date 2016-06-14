@@ -18,5 +18,7 @@ VAR_T * create_field_oid(char * str);
 
 VAR_T * create_parent_field(uint8_t type, VAR_T ** Fields, uint8_t number);
 
+VAR_T * create_field_int(uint8_t type, uint64_t content);
+
 
 #endif /* BER_H_ */
